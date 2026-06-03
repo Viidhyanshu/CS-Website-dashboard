@@ -88,7 +88,7 @@ export default async function EventsListPage() {
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
-                        
+
                         <form action={deleteEvent}>
                           <input type="hidden" name="id" value={event.id} />
                           <button

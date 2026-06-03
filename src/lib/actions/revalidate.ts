@@ -1,6 +1,6 @@
 'use server';
 
-export async function triggerWebsiteRevalidation(tag: 'hero' | 'gallery' | 'events') {
+export async function triggerWebsiteRevalidation(tag: 'hero' | 'gallery' | 'events' | 'team') {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_WEBSITE_URL}/api/revalidate`, {
       method: 'POST',

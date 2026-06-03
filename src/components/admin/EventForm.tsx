@@ -23,6 +23,7 @@ export default function EventForm({ initialData, onSubmit, submitLabel }: EventF
     eventDate: initialData?.eventDate ? new Date(initialData.eventDate).toISOString().substring(0, 16) : '',
     featured: initialData?.featured || false,
     status: initialData?.status || 'draft',
+    tag: initialData?.tag || 'Workshop',
   });
 
   const generateSlug = () => {
@@ -121,6 +122,26 @@ export default function EventForm({ initialData, onSubmit, submitLabel }: EventF
           >
             <option value="draft">Draft</option>
             <option value="published">Published</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400">Event Tag</label>
+          <select
+            value={formData.tag}
+            onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+            className="w-full bg-[#080808] border border-[#222] rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-[#f9ba1f]"
+          >
+            <option value="Workshop">Workshop</option>
+            <option value="Datathon">Datathon</option>
+            <option value="Hackathon">Hackathon</option>
+            <option value="Designathon">Designathon</option>
+            <option value="Competition">Competition</option>
+            <option value="Coding">Coding</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Quiz">Quiz</option>
+            <option value="Ideathon">Ideathon</option>
+            <option value="Machine Learning">Machine Learning</option>
           </select>
         </div>
 
