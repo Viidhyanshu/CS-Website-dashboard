@@ -1,6 +1,7 @@
 import { pgTable, uuid, varchar, text, integer, boolean, timestamp, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
+
 export const homepageGalleryItems = pgTable('homepage_gallery_items', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: varchar('title', { length: 255 }).notNull(),
@@ -45,11 +46,31 @@ export const events = pgTable('events', {
   displayOrder: integer('display_order').notNull().default(0),
   featured: boolean('featured').notNull().default(false),
   status: varchar('status', { length: 50 }).notNull().default('draft'),
+  tag: varchar('tag', { length: 100 }).notNull().default('Workshop'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 }, (table) => [
   index('events_status_order_idx').on(table.status, table.displayOrder),
   index('events_featured_idx').on(table.featured),
+]);
+
+// 5. Team Members
+export const teamMembers = pgTable('team_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  role: varchar('role', { length: 255 }).notNull(),
+  imageUrl: text('image_url').notNull(),
+  group: varchar('group', { length: 50 }).notNull().default('core'), // 'ec' | 'core' | 'web'
+  linkedinUrl: text('linkedin_url'),
+  instagramUrl: text('instagram_url'),
+  githubUrl: text('github_url'),
+  displayOrder: integer('display_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
+}, (table) => [
+  index('team_group_order_idx').on(table.group, table.displayOrder),
+  index('team_active_idx').on(table.isActive),
 ]);
 
 export const homepageHeroRelations = relations(homepageHero, ({ many }) => ({

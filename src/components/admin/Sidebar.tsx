@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, Image as ImageIcon, Sliders, Calendar, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, FileText, Image as ImageIcon, Sliders, Calendar, FolderOpen, Users } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -13,6 +13,7 @@ export default function Sidebar() {
     { label: 'Hero settings', href: '/admin/homepage/hero', icon: Sliders },
     { label: 'Hero overlay', href: '/admin/homepage/hero-images', icon: FileText },
     { label: 'Horizontal gallery', href: '/admin/homepage/gallery', icon: ImageIcon },
+    { label: 'Team manager', href: '/admin/team', icon: Users },
     { label: 'Events manager', href: '/admin/events', icon: Calendar },
     { label: 'Media library', href: '/admin/media', icon: FolderOpen },
   ];
