@@ -1,28 +1,53 @@
 'use server';
 
-import { db } from '../db';
-import { events } from '../db/schema';
-import { eq, asc } from 'drizzle-orm';
+import sql from '../db';
 import { triggerWebsiteRevalidation } from './revalidate';
 import { EventModel, NewEventModel } from '../types';
 
 export async function getAdminEventsAction(): Promise<EventModel[]> {
-  return db.select().from(events).orderBy(asc(events.displayOrder));
+  const rows = await sql`
+    SELECT
+      id, title, slug, description,
+      cover_image    AS "coverImage",
+      event_date     AS "eventDate",
+      display_order  AS "displayOrder",
+      featured, status, tag,
+      created_at     AS "createdAt",
+      updated_at     AS "updatedAt"
+    FROM events
+    ORDER BY display_order ASC
+  `;
+  return rows as unknown as EventModel[];
 }
 
 export async function getEventByIdAction(id: string): Promise<EventModel | null> {
-  const res = await db.select().from(events).where(eq(events.id, id)).limit(1);
-  return res[0] || null;
+  const rows = await sql`
+    SELECT
+      id, title, slug, description,
+      cover_image    AS "coverImage",
+      event_date     AS "eventDate",
+      display_order  AS "displayOrder",
+      featured, status, tag,
+      created_at     AS "createdAt",
+      updated_at     AS "updatedAt"
+    FROM events
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return (rows[0] as unknown as EventModel) || null;
 }
 
 export async function createEventAction(data: Omit<NewEventModel, 'displayOrder'>) {
   try {
-    const current = await db.select().from(events);
-    await db.insert(events).values({
-      ...data,
-      displayOrder: current.length,
-    });
-
+    const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM events`;
+    await sql`
+      INSERT INTO events (title, slug, description, cover_image, event_date, display_order, featured, status, tag)
+      VALUES (
+        ${data.title}, ${data.slug}, ${data.description}, ${data.coverImage},
+        ${data.eventDate}, ${count},
+        ${data.featured ?? false}, ${data.status ?? 'draft'}, ${data.tag ?? 'Workshop'}
+      )
+    `;
     await triggerWebsiteRevalidation('events');
     return { success: true };
   } catch (e) {
@@ -32,7 +57,20 @@ export async function createEventAction(data: Omit<NewEventModel, 'displayOrder'
 
 export async function updateEventAction(id: string, data: Partial<NewEventModel>) {
   try {
-    await db.update(events).set(data).where(eq(events.id, id));
+    const updates: Record<string, unknown> = {};
+    if (data.title !== undefined)       updates.title        = data.title;
+    if (data.slug !== undefined)        updates.slug         = data.slug;
+    if (data.description !== undefined) updates.description  = data.description;
+    if (data.coverImage !== undefined)  updates.cover_image  = data.coverImage;
+    if (data.eventDate !== undefined)   updates.event_date   = data.eventDate;
+    if (data.featured !== undefined)    updates.featured     = data.featured;
+    if (data.status !== undefined)      updates.status       = data.status;
+    if (data.tag !== undefined)         updates.tag          = data.tag;
+
+    if (Object.keys(updates).length > 0) {
+      updates.updated_at = new Date();
+      await sql`UPDATE events SET ${sql(updates)} WHERE id = ${id}`;
+    }
     await triggerWebsiteRevalidation('events');
     return { success: true };
   } catch (e) {
@@ -42,7 +80,7 @@ export async function updateEventAction(id: string, data: Partial<NewEventModel>
 
 export async function deleteEventAction(id: string) {
   try {
-    await db.delete(events).where(eq(events.id, id));
+    await sql`DELETE FROM events WHERE id = ${id}`;
     await triggerWebsiteRevalidation('events');
     return { success: true };
   } catch (e) {
@@ -52,14 +90,11 @@ export async function deleteEventAction(id: string) {
 
 export async function updateEventsOrderAction(orderedIds: string[]) {
   try {
-    await db.transaction(async (tx) => {
+    await sql.begin(async (tx) => {
       for (let i = 0; i < orderedIds.length; i++) {
-        await tx.update(events)
-          .set({ displayOrder: i })
-          .where(eq(events.id, orderedIds[i]));
+        await tx`UPDATE events SET display_order = ${i} WHERE id = ${orderedIds[i]}`;
       }
     });
-
     await triggerWebsiteRevalidation('events');
     return { success: true };
   } catch (e) {
