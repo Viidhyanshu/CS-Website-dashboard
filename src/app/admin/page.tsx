@@ -1,18 +1,16 @@
 import React from 'react';
-import { db } from '@/lib/db';
-import { homepageGalleryItems, events } from '@/lib/db/schema';
-import { count } from 'drizzle-orm';
+import sql from '@/lib/db';
 import { Calendar, Image as ImageIcon, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function DashboardOverview() {
-  const [galleryCount] = await db.select({ count: count() }).from(homepageGalleryItems);
-  const [eventsCount] = await db.select({ count: count() }).from(events);
-  const heroData = await db.query.homepageHero.findFirst();
+  const [{ count: galleryCount }] = await sql`SELECT COUNT(*)::int AS count FROM homepage_gallery_items`;
+  const [{ count: eventsCount }] = await sql`SELECT COUNT(*)::int AS count FROM events`;
+  const [heroData] = await sql`SELECT heading FROM homepage_hero LIMIT 1`;
 
   const cards = [
-    { label: 'Gallery items', count: galleryCount.count, href: '/admin/homepage/gallery', icon: ImageIcon, desc: 'Horizontal slider images' },
-    { label: 'Club events', count: eventsCount.count, href: '/admin/events', icon: Calendar, desc: 'Event posters & settings' },
+    { label: 'Gallery items', count: galleryCount, href: '/admin/homepage/gallery', icon: ImageIcon, desc: 'Horizontal slider images' },
+    { label: 'Club events', count: eventsCount, href: '/admin/events', icon: Calendar, desc: 'Event posters & settings' },
   ];
 
   return (
