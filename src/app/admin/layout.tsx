@@ -1,7 +1,20 @@
 import React from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import { getSessionUser } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { logoutAction } from '@/lib/actions/auth';
+import { User, LogOut } from 'lucide-react';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await getSessionUser();
+  const adminEmailEnv = process.env.ADMIN_EMAIL || '';
+  const adminEmails = adminEmailEnv.split(',').map(email => email.trim().toLowerCase());
+
+  // Extra defense-in-depth check: Redirect to login if user is unauthorized
+  if (!user || !user.email || !adminEmails.includes(user.email.toLowerCase())) {
+    redirect('/login?error=unauthorized');
+  }
+
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200 flex font-sans">
       {/* Sidebar navigation */}
@@ -13,11 +26,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div>
             <h1 className="text-xs text-gray-500 uppercase tracking-widest font-mono">Decoupled Dashboard</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-xs text-emerald-500 bg-emerald-950/30 border border-emerald-900/40 px-2.5 py-1 rounded-full font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              Live Sync
-            </span>
+          
+          {/* Admin Profile & Logout Section in Header */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#f9ba1f]/10 border border-[#f9ba1f]/20 flex items-center justify-center text-[#f9ba1f] flex-shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-semibold text-white leading-tight font-sans">Administrator</p>
+                <p className="text-[10px] text-gray-500 truncate font-mono max-w-[180px]" title={user.email ?? ''}>
+                  {user.email}
+                </p>
+              </div>
+            </div>
+            
+            <div className="h-6 w-[1px] bg-[#1f1f1f]"></div>
+
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-950/20 border border-transparent hover:border-red-900/30 transition-all font-sans cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </form>
           </div>
         </header>
         <main className="p-8 max-w-7xl w-full mx-auto flex-1">

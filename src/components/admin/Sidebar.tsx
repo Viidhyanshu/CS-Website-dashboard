@@ -48,9 +48,6 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-[#1f1f1f] bg-[#0c0c0c] text-[10px] text-gray-600 text-center font-mono">
-        v1.0.0
-      </div>
     </aside>
   );
 }
