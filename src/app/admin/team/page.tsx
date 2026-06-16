@@ -94,7 +94,7 @@ export default function TeamPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="E.g., Samaksh Gupta"
+                  placeholder="E.g., Tanmoy Mandal"
                   className="w-full bg-[#080808] border border-[#222] rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-[#f9ba1f]"
                 />
               </div>
