@@ -1,5 +1,26 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+
+/**
+ * Next.js Proxy Middleware — simple cookie-based auth (no Supabase).
+ * Checks for a signed session cookie set by the login API route.
+ */
+export async function proxy(request: NextRequest) {
+  const session = request.cookies.get('admin_session')?.value;
+  const validToken = process.env.ADMIN_SESSION_TOKEN;
+
+  if (!session || session !== validToken) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('error', 'unauthenticated');
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
+
+// Config to secure every route under /admin
+export const config = {
+  matcher: ['/admin/:path*'],
+};
 
 /**
  * Next.js 16 Proxy Middleware replacing the deprecated middleware convention.

@@ -1,19 +1,20 @@
 import React from 'react';
 import Sidebar from '@/components/admin/Sidebar';
-import { getSessionUser } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { logoutAction } from '@/lib/actions/auth';
+import { cookies } from 'next/headers';
 import { User, LogOut } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getSessionUser();
-  const adminEmailEnv = process.env.ADMIN_EMAIL || '';
-  const adminEmails = adminEmailEnv.split(',').map(email => email.trim().toLowerCase());
+  const cookieStore = await cookies();
+  const session = cookieStore.get('admin_session')?.value;
+  const validToken = process.env.ADMIN_SESSION_TOKEN;
 
-  // Extra defense-in-depth check: Redirect to login if user is unauthorized
-  if (!user || !user.email || !adminEmails.includes(user.email.toLowerCase())) {
-    redirect('/login?error=unauthorized');
+  if (!session || session !== validToken) {
+    redirect('/login?error=unauthenticated');
   }
+
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'Administrator';
 
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200 flex font-sans">
@@ -35,8 +36,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-semibold text-white leading-tight font-sans">Administrator</p>
-                <p className="text-[10px] text-gray-500 truncate font-mono max-w-[180px]" title={user.email ?? ''}>
-                  {user.email}
+                <p className="text-[10px] text-gray-500 truncate font-mono max-w-[180px]" title={adminEmail}>
+                  {adminEmail}
                 </p>
               </div>
             </div>
