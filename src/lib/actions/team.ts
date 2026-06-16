@@ -27,13 +27,22 @@ export async function getAdminTeamMembersAction(): Promise<TeamMember[]> {
 
 export async function createTeamMemberAction(data: Omit<NewTeamMember, 'id' | 'displayOrder' | 'createdAt' | 'updatedAt'>) {
   try {
+    const name = data.name ?? '';
+    const role = data.role ?? '';
+    const imageUrl = data.imageUrl ?? '';
+    const group = data.group ?? 'core';
+    const linkedinUrl = data.linkedinUrl ?? null;
+    const instagramUrl = data.instagramUrl ?? null;
+    const githubUrl = data.githubUrl ?? null;
+    const isActive = data.isActive ?? true;
+
     const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM team_members`;
     await sql`
       INSERT INTO team_members (name, role, image_url, "group", linkedin_url, instagram_url, github_url, display_order, is_active)
       VALUES (
-        ${data.name}, ${data.role}, ${data.imageUrl}, ${data.group ?? 'core'},
-        ${data.linkedinUrl ?? null}, ${data.instagramUrl ?? null}, ${data.githubUrl ?? null},
-        ${count}, ${data.isActive ?? true}
+        ${name}, ${role}, ${imageUrl}, ${group},
+        ${linkedinUrl}, ${instagramUrl}, ${githubUrl},
+        ${count}, ${isActive}
       )
     `;
     await triggerWebsiteRevalidation('team');
