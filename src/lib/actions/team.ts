@@ -5,24 +5,39 @@ import { triggerWebsiteRevalidation } from './revalidate';
 import { TeamMember, NewTeamMember } from '../types';
 
 export async function getAdminTeamMembersAction(): Promise<TeamMember[]> {
-  const rows = await sql`
-    SELECT
-      id, name, role,
-      image_url      AS "imageUrl",
-      "group",
-      linkedin_url   AS "linkedinUrl",
-      instagram_url  AS "instagramUrl",
-      github_url     AS "githubUrl",
-      display_order  AS "displayOrder",
-      is_active      AS "isActive",
-      created_at     AS "createdAt",
-      updated_at     AS "updatedAt"
-    FROM team_members
-    ORDER BY
-      CASE "group" WHEN 'ec' THEN 1 WHEN 'web' THEN 2 WHEN 'core' THEN 3 ELSE 4 END,
-      display_order ASC
-  `;
-  return rows as unknown as TeamMember[];
+  // Add retry logic for transient connection failures
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const rows = await sql`
+        SELECT
+          id, name, role,
+          image_url      AS "imageUrl",
+          "group",
+          linkedin_url   AS "linkedinUrl",
+          instagram_url  AS "instagramUrl",
+          github_url     AS "githubUrl",
+          display_order  AS "displayOrder",
+          is_active      AS "isActive",
+          created_at     AS "createdAt",
+          updated_at     AS "updatedAt"
+        FROM team_members
+        ORDER BY
+          CASE "group" WHEN 'ec' THEN 1 WHEN 'web' THEN 2 WHEN 'core' THEN 3 ELSE 4 END,
+          display_order ASC
+      `;
+      return rows as unknown as TeamMember[];
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < 2) {
+        // Wait 100ms before retrying
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Failed to fetch team members');
 }
 
 export async function createTeamMemberAction(data: Omit<NewTeamMember, 'id' | 'displayOrder' | 'createdAt' | 'updatedAt'>) {
@@ -96,7 +111,11 @@ export async function updateTeamMembersOrderAction(orderedIds: string[]) {
       }
     });
     
-    await triggerWebsiteRevalidation('team');
+    // Fire-and-forget revalidation - don't wait for it
+    triggerWebsiteRevalidation('team').catch(err => {
+      console.error('Revalidation failed (non-blocking):', err);
+    });
+    
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };
