@@ -18,9 +18,23 @@ export async function loginAction(prevState: AuthState, formData: FormData): Pro
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  const adminEmail1 = process.env.ADMIN_EMAIL1?.trim().toLowerCase();
+  const adminPassword1 = process.env.ADMIN_PASSWORD1?.trim();
+  const adminEmail2 = process.env.ADMIN_EMAIL2?.trim().toLowerCase();
+  const adminPassword2 = process.env.ADMIN_PASSWORD2?.trim();
   const sessionToken = process.env.ADMIN_SESSION_TOKEN;
 
-  if (email.trim().toLowerCase() !== adminEmail || password !== adminPassword) {
+  const validCredentials = [
+    { email: adminEmail, password: adminPassword },
+    { email: adminEmail1, password: adminPassword1 },
+    { email: adminEmail2, password: adminPassword2 },
+  ];
+
+  const isValidLogin = validCredentials.some(
+    cred => email.trim().toLowerCase() === cred.email && password === cred.password
+  );
+
+  if (!isValidLogin) {
     return { error: 'Invalid email or password.' };
   }
 
