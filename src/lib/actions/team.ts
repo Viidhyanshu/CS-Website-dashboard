@@ -1,6 +1,7 @@
 'use server';
 
 import sql from '../db';
+import { triggerWebsiteRevalidation } from './revalidate';
 import { TeamMember, NewTeamMember } from '../types';
 
 export async function getAdminTeamMembersAction(): Promise<TeamMember[]> {
