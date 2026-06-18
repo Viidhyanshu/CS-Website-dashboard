@@ -1,7 +1,6 @@
 'use server';
 
 import sql from '../db';
-import { triggerWebsiteRevalidation } from './revalidate';
 import { TeamMember, NewTeamMember } from '../types';
 
 export async function getAdminTeamMembersAction(): Promise<TeamMember[]> {
@@ -60,7 +59,6 @@ export async function createTeamMemberAction(data: Omit<NewTeamMember, 'id' | 'd
         ${count}, ${isActive}
       )
     `;
-    await triggerWebsiteRevalidation('team');
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };
@@ -83,7 +81,6 @@ export async function updateTeamMemberAction(id: string, data: Partial<NewTeamMe
       updates.updated_at = new Date();
       await sql`UPDATE team_members SET ${sql(updates)} WHERE id = ${id}`;
     }
-    await triggerWebsiteRevalidation('team');
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };
@@ -93,7 +90,6 @@ export async function updateTeamMemberAction(id: string, data: Partial<NewTeamMe
 export async function deleteTeamMemberAction(id: string) {
   try {
     await sql`DELETE FROM team_members WHERE id = ${id}`;
-    await triggerWebsiteRevalidation('team');
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };
@@ -111,10 +107,8 @@ export async function updateTeamMembersOrderAction(orderedIds: string[]) {
       }
     });
     
-    // Fire-and-forget revalidation - don't wait for it
-    triggerWebsiteRevalidation('team').catch(err => {
-      console.error('Revalidation failed (non-blocking):', err);
-    });
+    // Skip revalidation for now - it's causing 30+ minute delays
+    // TODO: Implement background job queue for revalidation
     
     return { success: true };
   } catch (e) {
