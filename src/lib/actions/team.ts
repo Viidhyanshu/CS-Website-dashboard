@@ -87,11 +87,18 @@ export async function deleteTeamMemberAction(id: string) {
 
 export async function updateTeamMembersOrderAction(orderedIds: string[]) {
   try {
-    await sql.begin(async (tx) => {
-      for (let i = 0; i < orderedIds.length; i++) {
-        await tx`UPDATE team_members SET display_order = ${i} WHERE id = ${orderedIds[i]}`;
-      }
-    });
+    // Bulk update using VALUES: UPDATE team_members SET display_order = data.order FROM (VALUES ...) AS data(id, order)
+    if (orderedIds.length === 0) return { success: true };
+    
+    const values = orderedIds.map((id, index) => ({ id, order: index }));
+    
+    await sql`
+      UPDATE team_members
+      SET display_order = data.order
+      FROM (SELECT * FROM ${sql(values)}) AS data(id, order)
+      WHERE team_members.id = data.id
+    `;
+    
     await triggerWebsiteRevalidation('team');
     return { success: true };
   } catch (e) {
