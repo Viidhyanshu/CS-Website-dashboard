@@ -13,6 +13,14 @@ interface DragAndDropEventsProps {
   deleteEventServerAction: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
+function ClientDate({ date }: { date: string | Date }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted ? <>{new Date(date).toLocaleDateString()}</> : null;
+}
+
 export default function DragAndDropEvents({ initialItems, deleteEventServerAction }: DragAndDropEventsProps) {
   const router = useRouter();
   const [items, setItems] = useState<EventModel[]>(initialItems);
@@ -171,7 +179,7 @@ export default function DragAndDropEvents({ initialItems, deleteEventServerActio
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 font-mono">
                     <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                    <span>{new Date(event.eventDate).toLocaleDateString()}</span>
+                    <span><ClientDate date={event.eventDate} /></span>
                   </div>
                   <div>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
@@ -208,7 +216,7 @@ export default function DragAndDropEvents({ initialItems, deleteEventServerActio
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                        <span>{new Date(event.eventDate).toLocaleDateString()}</span>
+                        <span><ClientDate date={event.eventDate} /></span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
